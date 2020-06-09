@@ -4,14 +4,6 @@ This is a software third-party vulnerable API mining system. It aims to mine the
 
 # Files
 
-cve_json folder: stores vulnerabilities' coarse-grained information.
-
-api_json folder: stores the information of APIs related to vulnerabilities.
-
-jar_json folder: stored the jar information of projects.
-
-git_repository: stores repositories of projects.
-
 main.py: the main function of this tool.
 
 Finder.py: find qualified CNNVD vulnerabilities and related APIs.
@@ -21,6 +13,16 @@ jar.py: find the jar information of projects.
 Evaluate.py: evaluate the influence of analyzed project and how many vulnerable APIs it has.
 
 Saver.py: save the vulnerable APIs into database.
+
+【Besides, you should create these folders in project directory.】
+
+cve_json folder: stores vulnerabilities' coarse-grained information. Name: 'cve_json'.
+
+api_json folder: stores the information of APIs related to vulnerabilities. Name: 'api_json'.
+
+jar_json folder: stored the jar information of projects. Name: 'jar_json'
+
+git_repository folder: stores repositories of projects. Name: 'git_repository'.
 
 # Usage
 
