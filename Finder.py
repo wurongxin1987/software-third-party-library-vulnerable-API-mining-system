@@ -6,14 +6,19 @@ import json
 from git.repo import Repo
 import os
 # should be changed to your directory
-with os.add_dll_directory('F:\\SciTools\\bin\\pc-win64'):
-	import understand
+#with os.add_dll_directory('F:\\SciTools\\bin\\pc-win64'):
+import sys
+sys.path.append('/home/user/scitools/bin/linux64/python')
+import understand
 import re
 
 # get the vulnerability's information and save it as json
 def collect_vulnerability_detail(url, code_link, patch_link_list):
 	info = {}
-	req = requests.get(url, timeout = 40)
+	try:
+		req = requests.get(url, timeout = 40)
+	except:
+		raise RuntimeError('request timeout')
 	soup = BeautifulSoup(req.text, "lxml")
 	info["cve_name"] = soup.find('div', class_='detail_xq w770').find('h2').text.replace('\n','').replace('\t','')
 	if hasattr(soup.find('div', class_='detail_xq w770').find('ul').span, 'text') == False:
@@ -188,14 +193,20 @@ def find_vulnerable_api(db, file_name, changed_lines, apis_file, total_api, comm
 def find_changed_code_pull(pull_link, project_dir, apis_file, total_api):
 	commits_link = pull_link + '/commits'
 	# get commit page in commits page
-	commits_req = requests.get(commits_link, timeout = 40)
+	try:
+		commits_req = requests.get(commits_link, timeout = 40)
+	except:
+		raise RuntimeError('request timeout')
 	commits_soup = BeautifulSoup(commits_req.text, "lxml")
 	commits_msg = commits_soup.find('div', class_ = 'commits-listing commits-listing-padded js-navigation-container js-active-navigation-container').find_all('li')
 	for commit_msg in commits_msg:
 		commit_href = commit_msg.find('div', class_ = 'table-list-cell').find('a', class_ = 'message js-navigation-open')['href']
 		patch_link = 'https://github.com' + commit_href
 		# look up the commitid in the commit page
-		patch_req = requests.get(patch_link, timeout = 40)
+		try:
+			patch_req = requests.get(patch_link, timeout = 40)
+		except:
+			raise RuntimeError('request timeout')
 		patch_soup = BeautifulSoup(patch_req.text, "lxml")
 		commitid = patch_soup.find('div', class_ = 'commit-meta clearfix p-2 no-wrap d-flex flex-items-center').find('span', class_ = 'sha user-select-contain').text
 		message_all = patch_soup.find_all('div', class_ = 'file js-file js-details-container js-targetable-element Details Details--on open show-inline-notes')
@@ -214,9 +225,10 @@ def find_changed_code_pull(pull_link, project_dir, apis_file, total_api):
 			continue
 		# create and open an udb
 		udbfile = project_dir + '/' + project_dir.split('/')[-1] + '.udb'
-		os.system('und create -languages Java ' + udbfile)
-		os.system('und add ' + project_dir + ' ' + udbfile)
-		os.system('und analyze ' + udbfile)
+		print(udbfile)
+		os.system('/home/user/scitools/bin/linux64/und create -languages Java ' + udbfile)
+		os.system('/home/user/scitools/bin/linux64/und add ' + project_dir + ' ' + udbfile)
+		os.system('/home/user/scitools/bin/linux64/und analyze ' + udbfile)
 		db = understand.open(udbfile)
 		# look up changed files and lines in commit page
 		for message in message_all:
@@ -246,7 +258,10 @@ def find_changed_code_pull(pull_link, project_dir, apis_file, total_api):
 
 def find_changed_code_commit(patch_link, project_dir, apis_file, total_api):
 	# look up the commitid in the commit page
-	patch_req = requests.get(patch_link, timeout = 40)
+	try:
+		patch_req = requests.get(patch_link, timeout = 40)
+	except:
+		raise RuntimeError('request timeout')
 	patch_soup = BeautifulSoup(patch_req.text, "lxml")
 	commitid = patch_soup.find('div', class_ = 'flex-auto no-wrap text-lg-right text-left overflow-x-auto').find('span', class_ = 'sha user-select-contain').text
 	message_all = patch_soup.find_all('div', class_ = 'file js-file js-details-container js-targetable-element Details Details--on open show-inline-notes')
@@ -267,9 +282,9 @@ def find_changed_code_commit(patch_link, project_dir, apis_file, total_api):
 	if not is_error:
 		# create and open an udb
 		udbfile = project_dir + '/' + project_dir.split('/')[-1] + '.udb'
-		os.system('und create -languages Java ' + udbfile)
-		os.system('und add ' + project_dir + ' ' + udbfile)
-		os.system('und analyze ' + udbfile)
+		os.system('/home/user/scitools/bin/linux64/und create -languages Java ' + udbfile)
+		os.system('/home/user/scitools/bin/linux64/und add ' + project_dir + ' ' + udbfile)
+		os.system('/home/user/scitools/bin/linux64/und analyze ' + udbfile)
 		db = understand.open(udbfile)
 		# look up changed files and lines in commit page
 		for message in message_all:
@@ -294,12 +309,18 @@ def find_changed_code_commit(patch_link, project_dir, apis_file, total_api):
 
 def get_vulnerability_detail(url_now):
 	url = 'http://www.cnnvd.org.cn'+url_now
-	req = requests.get(url, timeout = 40)
+	try:
+		req = requests.get(url, timeout = 40)
+	except:
+		raise RuntimeError('request timeout')
 	soup = BeautifulSoup(req.text, "lxml")
 	cve_link = soup.find('div', class_ = 'detail_xq w770').find('ul').find_all('li')[2].a['href']
 	# if the cve_link exists
 	if cve_link.split('=')[1] != '':
-		cve_req = requests.get(cve_link, timeout = 40)
+		try:
+			cve_req = requests.get(cve_link, timeout = 40)
+		except:
+			raise RuntimeError('request timeout')
 		if cve_req.status_code == 200:
 			cve_soup = BeautifulSoup(cve_req.text, "lxml")
 			print(cve_link)
@@ -316,7 +337,10 @@ def get_vulnerability_detail(url_now):
 			if patch_found:
 				code_link = patch_link_list[0]
 				download_link = 'https://github.com/'+code_link.split('/')[3]+'/'+code_link.split('/')[4]+'.git'
-				git_req = requests.get(download_link, timeout = 40)
+				try:
+					git_req = requests.get(download_link, timeout = 40)
+				except:
+					raise RuntimeError('request timeout')
 				if git_req.status_code == 200:
 					git_soup = BeautifulSoup(git_req.text, "lxml")
 					print('-----github project found: ' + code_link + '-----')
@@ -326,7 +350,7 @@ def get_vulnerability_detail(url_now):
 						if git_soup.find('div', class_ = 'repository-content').find('details', class_ = 'details-reset').find('div', class_ = 'd-flex repository-lang-stats-graph').find('span').text == 'Java':
 							print('-----Java github project found: ' + code_link + '-----')
 							collect_vulnerability_detail(url, code_link, patch_link_list)
-							# code_clone(code_link)
+							code_clone(code_link)
 							apis_file = open('./api_json/'+code_link.split('/')[4]+'_'+cve_no+'.json', 'a+',encoding='utf-8') 
 							project_dir = './git_repository/'+code_link.split('/')[4]
 							total_api = []
@@ -341,7 +365,10 @@ def get_vulnerability_detail(url_now):
 # get total pages count
 def get_all_page():
 	global all_page
-	req = requests.get('http://www.cnnvd.org.cn/web/vulnerability/querylist.tag',timeout=40)
+	try:
+		req = requests.get('http://www.cnnvd.org.cn/web/vulnerability/querylist.tag',timeout=40)
+	except:
+		raise RuntimeError('request timeout')
 	soup = BeautifulSoup(req.text, "lxml")
 	message = soup.find('div', class_='page').find('a')
 	if hasattr(message, 'text') == False:
@@ -356,19 +383,45 @@ def get_all_page():
 
 # get all vulnerabilities' links in the page of now_url
 def get_now_page_all_url(now_url):
-	req = requests.get(now_url, timeout = 40)
+	try:
+		req = requests.get(now_url, timeout = 40)
+	except:
+		raise RuntimeError('request timeout')
 	soup = BeautifulSoup(req.text, "lxml")
 	message = soup.find('div', class_='list_list').find('ul').find_all('li')
 	for data in message:
 		get_vulnerability_detail(data.div.a['href'])
 
+def get_current_page(file_path):
+	# if not os.path.isfile(file_path):
+	# 	f=open(file_path, 'w')
+	# 	f.write('1')
+	# 	f.close()
+	# 	return 1
+	# else :
+		f=open(file_path, 'r')
+		data=f.readline()
+		f.close()
+		return data
+
+def update_current_page(file_path, curr_page):
+	f=open(file_path, 'w')
+	f.write(str(curr_page))
+	f.close()
+
 # the start function
 def start():
+#	understand.license('BBC230FE4756')
+#	db=understand.open('/home/user/software-third-party-library-vulnerable-API-mining-system/git_repository/bw-webdav/bw-webdav.udb')
 	get_all_page()
+	current_page = get_current_page('./curr_page')
 	try:
-		for now_page in range(1, all_page):
+		for now_page in range(int(current_page), all_page):
+			update_current_page('./curr_page', now_page+1)
 			print(now_page)
 			get_now_page_all_url('http://www.cnnvd.org.cn/web/vulnerability/querylist.tag?pageno=' + str(now_page) + '&repairLd=')
 			print('end')
 	except:
 		print('error')
+
+start()
